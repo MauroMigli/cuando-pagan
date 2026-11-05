@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Stress test: stress [sol] [brute] [gen] [runs]
+# Defaults: sol.cpp brute.cpp gen.cpp, 2000 runs. Run it from the problem folder.
+sol=${1:-main}; brute=${2:-brute}; gen=${3:-gen}; runs=${4:-10}
+
+for f in "$sol" "$brute" "$gen"; do
+    # recompile only when the source is newer than the binary: reruns start instantly
+    if [[ ! -x "$f" || "$f.cpp" -nt "$f" ]]; then
+        g++ -std=c++20 -O2 -o "$f" "$f.cpp" || { echo "Compile error in $f.cpp"; exit 1; }
+    fi
+done
+
+for ((i = 1; i <= runs; i++)); do
+    ./"$gen" "$i" > in.txt
+    # 2>/dev/null hides cpp-dump output, which goes to stderr and would flood the terminal
+    ./"$sol" < in.txt > out1.txt 2>/dev/null
+    ./"$brute" < in.txt > out2.txt 2>/dev/null
+    # -b ignores trailing/extra spaces, -B blank lines: format nits never cause a false FAIL
+    if ! diff -bBq out1.txt out2.txt > /dev/null; then
+        echo "FAIL on seed $i"
+        echo "--- input ---";  cat in.txt
+        echo "--- $sol ---";   cat out1.txt
+        echo "--- $brute ---"; cat out2.txt
+        exit 1
+    fi
+done
+
+echo "PASS: $runs tests"
