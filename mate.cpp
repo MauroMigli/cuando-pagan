@@ -59,3 +59,9 @@ ll extended_gcd(ll a, ll b, ll &x, ll &y) {
 ll mod_inverse_fermat(ll a, ll p) {
     return mod_binpow(a, p - 2, p);
 }
+
+/* 
+Mod inverse precomp 
+inv[1] = 1;
+for (int i = 2; i < MAXN; i++) inv[i] = (MOD - MOD / i) * inv[MOD % i] % MOD;
+*/
